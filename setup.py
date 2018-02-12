@@ -15,8 +15,7 @@ setup(
     long_description=long_description,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
-    entry_points="""
-    [console_scripts]
-    grin_wsgi=grin_wsgi.main:run
-    """
+    entry_points={
+        'console_scripts': ['gwsgi=grin_wsgi.main:run']
+    }
 )
