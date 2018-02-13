@@ -1,3 +1,8 @@
+import socket
+import threading
+import multiprocessing
+
+
 from wsgiref.simple_server import make_server
 
 
@@ -23,6 +28,63 @@ def _request_query_string_as_list_of_tuples(query_string):
                                 value_set.replace('+', ' ').split(';')))
 
     return key_value_pairs
+
+
+class SimpleHTTPServer:
+
+    CONNECTION_QUEUE_LIMIT = 1
+
+    def __init__(self, host, port):
+        self._serversock = None
+        self._create_serversocket(host, port)
+
+    def _create_serversocket(self, host, port):
+        self._serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._serversock.bind((host, port))
+
+    def listen(self):
+        self._serversock.listen(self.CONNECTION_QUEUE_LIMIT)
+        while True:
+            self.accept()
+
+    def accept(self):
+        clientsock, address = self._serversock.accept()
+        self.listen_to_client(clientsock, address)
+
+    def listen_to_client(self, clientsock, address):
+        while True:
+            try:
+                request = clientsock.recv(1024)
+                if not request: raise
+                # TODO: generate Response
+                clientsock.send(request)
+            except Exception:
+                clientsock.close()
+                return False
+
+
+class ThreadedHTTPServer(SimpleHTTPServer):
+
+    CONNECTION_QUEUE_LIMIT = 5
+
+    def accept(self):
+        clientsock, address = self._serversock.accept()
+        clientsock.settimeout(60)
+        threading.Thread(target=self.listen_to_client,
+                         args=(clientsock, address))
+
+
+class MultiprocessingHTTPServer(SimpleHTTPServer):
+
+    CONNECTION_QUEUE_LIMIT = 1
+
+    def accept(self):
+        clientsock, address = self._serversock.accept()
+        process = multiprocessing.Process(target=self.listen_to_client,
+                                          args=(clientsock, address))
+        process.daemon = True
+        process.start()
 
 
 def application(
