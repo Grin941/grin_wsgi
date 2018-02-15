@@ -4,6 +4,7 @@ import threading
 import multiprocessing
 
 from io import StringIO
+from email.utils import formatdate
 
 
 class SimpleHTTPServer:
@@ -29,7 +30,7 @@ class SimpleHTTPServer:
     def _accept(self, request_handler):
         clientsock, address = self._serversock.accept()
         try:
-            request = clientsock.recv(1024)
+            request = clientsock.recv(1024).decode('utf-8')
             print('Request: ', request)
             if not request: raise
             response = request_handler(request)
@@ -119,14 +120,58 @@ class Response:
         self._body = response_body
 
     def get_response(self):
-        response = b'HTTP/1.1 {status}\r\n'.format(status=self._status)
+        response = 'HTTP/1.1 {status}\r\n'.format(status=self._status)
         for header in self._headers:
-            response += b'{0}: {1}\r\n'.format(*header)
-        response += b'\r\n'
+            response += '{0}: {1}\r\n'.format(*header)
+        response += '\r\n'
         for data in self._body:
-            response += data
+            response += data.decode('utf-8')
 
-        return response
+        return response.encode('utf-8')
+
+
+class Request:
+
+    def __init__(self):
+        self._plain_request = None
+        self.data = None
+
+    def __getattr__(self, name):
+        return self.data[name]
+
+    @property
+    def plain_request(self):
+        return self._plain_request
+
+    @plain_request.setter
+    def plain_request(self, plain_request):
+        self._parse_request(plain_request)
+        self._plain_request = plain_request
+
+    def _parse_request(self, request):
+        request_list = request.splitlines()
+
+        request_line = request_list[0]
+        host_header = next(filter(lambda x: 'Host:' in x, request_list), '::')
+        content_length_header = next(
+            filter(lambda x: 'Content-Length:' in x, request_list), ':')
+
+        http_method, uri, http_version = request_line.split()
+        host, port = host_header.split(':')[1:]
+        content_length = content_length_header.split(':')[1]
+        query_string = uri.split('?')[1] if '?' in uri else ''
+        body = request_list[-1]
+
+        self.data = {
+            'method': http_method,
+            'uri': uri,
+            'version': http_version,
+            'host': host,
+            'port': port,
+            'content_length': content_length,
+            'query_string': query_string,
+            'body': body,
+        }
 
 
 class WSGIRequestHandler:
@@ -134,48 +179,35 @@ class WSGIRequestHandler:
     def __init__(self, application):
         self._application = application
         self._response = Response()
+        self._request = Request()
 
     def __call__(self, request):
-        env = self._get_environ(request)
-        response_body = self.application(env, self._start_response)
+        self._request.plain_request = request
+        env = self._get_environ(self._request)
+        response_body = self._application(env, self._start_response)
 
-        self.finish_response(response_body)
+        self._finish_response(response_body)
 
     def _get_environ(self, request):
         env = {}
 
-        request_method, uri, request_version, host, port = \
-            self._parse_request(request)
-
         # Required UWSGI variables
-        env['wsgi.version'] = (1, 0)
-        env['wsgi.url_scheme'] = 'http'
-        env['wsgi.input'] = StringIO.StringIO(self.request_data)
+        env['wsgi.input'] = StringIO(request.body)
         env['wsgi.errors'] = sys.stderr
-        env['wsgi.multithread'] = False
-        env['wsgi.multiprocess'] = False
-        env['wsgi.run_once'] = False
 
         # Required CGI variables
-        env['REQUEST_METHOD'] = request_method
-        env['PATH_INFO'] = uri
-        env['SERVER_NAME'] = socket.getfqdn(host)
-        env['SERVER_PORT'] = port
+        env['REQUEST_METHOD'] = request.method
+        env['PATH_INFO'] = request.uri
+        env['SERVER_NAME'] = socket.getfqdn(request.host)
+        env['SERVER_PORT'] = request.port
+        env['QUERY_STRING'] = request.query_string
+        env['CONTENT_LENGTH'] = request.content_length
 
         return env
 
-    def _parse_request(self, request):
-        request_list = request.splitlines()
-        request_line, host_header = request_list[0:2]
-
-        http_method, uri, http_version = request_line.split()
-        host, port = host_header.split(b':')[1:]
-
-        return http_method, uri, http_version, host, port
-
     def _start_response(self, status, response_headers, exc_info=None):
         server_headers = [
-            ('Date', ''),
+            ('Date', formatdate(timeval=None, localtime=False, usegmt=True)),
             ('Server', 'WSGIServer 0.2')
         ]
 
@@ -184,6 +216,7 @@ class WSGIRequestHandler:
 
     def _finish_response(self, response_body):
         self._response.body = response_body
+        print('Response: ', self._response.get_response().decode('utf-8'))
         return self._response.get_response()
 
 
@@ -221,19 +254,22 @@ def application(
         environ,  # dictionary containing CGI like environment
         start_response
 ):
-    request_method = environ['REQUEST_METHOD']
-    if request_method == 'GET':
-        request_body = environ['QUERY_STRING']
-    else:
-        try:
-            request_body_size = int(environ.get('CONTENT_LENGTH', 0))
-        except ValueError: request_body_size = 0
-        request_body = environ['wsgi.input'].read(request_body_size)
+    try:
+        request_body_size = int(environ.get('CONTENT_LENGTH', 0))
+    except ValueError:
+        request_body_size = 0
 
+    request_method = environ['REQUEST_METHOD']
+    request_body = environ['QUERY_STRING'] if request_method == 'GET' else \
+        environ['wsgi.input'].read(request_body_size)
+    print('Request body: ', request_body)
+
+    print('Parsed: ', parse_request_query_string(str(request_body)))
     response_body = '\n'.join([
         '{} {}'.format(k, v) for k, v in
         sorted(parse_request_query_string(str(request_body)).items())
     ])
+    print('Response body: ', response_body)
     status = '200 OK'
     response_headers = [
         ('Content-Type', 'text/plain'),
@@ -249,18 +285,3 @@ def run(host='localhost', port=8051, application=application,
     httpd = make_server(host, port, application)
     print('WSGIServer: Serving HTTP on port {port} ...\n'.format(port=port))
     httpd.serve_forever()
-
-
-if __name__ == '__main__':
-    host, port = 'localhost', 8051
-    threads = multiprocs = False
-
-    if len(sys.argv) < 2:
-        application = application
-        # sys.exit('Provide a WSGI application object as module:callable')
-    else:
-        app_path = sys.argv[1]
-        module, application = app_path.split(':')
-        module = __import__(module)
-        application = getattr(module, application)
-    run(host, port, application, threads, multiprocs)
