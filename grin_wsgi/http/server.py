@@ -8,6 +8,8 @@ class SimpleHTTPServer:
     CONNECTION_QUEUE_LIMIT = 1
     SOCKET_FAMILY = socket.AF_INET
     SOCKET_TYPE = socket.SOCK_STREAM
+    MULTITHREAD = False
+    MULTIPROCESS = False
 
     def __init__(self, host, port):
         self._serversock = None
@@ -39,6 +41,7 @@ class SimpleHTTPServer:
 class ThreadedHTTPServer(SimpleHTTPServer):
 
     CONNECTION_QUEUE_LIMIT = 5
+    MULTITHREAD = True
 
     def _accept(self):
         clientsock, address = self._serversock.accept()
@@ -50,6 +53,7 @@ class ThreadedHTTPServer(SimpleHTTPServer):
 class MultiprocessingHTTPServer(SimpleHTTPServer):
 
     CONNECTION_QUEUE_LIMIT = 1
+    MULTIPROCESS = True
 
     def _accept(self):
         clientsock, address = self._serversock.accept()
