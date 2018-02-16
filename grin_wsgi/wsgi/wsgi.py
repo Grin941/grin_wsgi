@@ -9,6 +9,11 @@ from grin_wsgi.http.server import SimpleHTTPServer, \
     ThreadedHTTPServer, MultiprocessingHTTPServer
 
 
+def make_server(host, port, application,
+                threads=False, multiprocs=False):
+    return WSGIServer(host, port, application)
+
+
 class WSGIRequestHandler:
 
     def __init__(self, application,
