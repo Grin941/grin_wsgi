@@ -1,12 +1,10 @@
 import argparse
 
-from grin_wsgi.wsgi.wsgi import make_server
-from grin_wsgi.framework.app import application
 from grin_wsgi import const
+from grin_wsgi.wsgi.config import WSGIConfig
 
 
-def run(host='localhost', port=8051, application=application,
-        threads=False, multiprocs=False):
+def run():
     parser = argparse.ArgumentParser(
         description='Grin WSGI Interface implementation.')
     parser.add_argument('--ini', default=const.INI,
@@ -14,7 +12,7 @@ def run(host='localhost', port=8051, application=application,
 
     parser.add_argument('--chdir', default=const.CHDIR,
                         help='Your project dir.')
-    parser.add_argument('--module', default=const.MODULE,
+    parser.add_argument('--module', default=const.TEST_FRAMEWORK_MODULE,
                         help='wsgi App file')
 
     parser.add_argument('--host', default=const.HOST, help='Server host.')
@@ -31,8 +29,8 @@ def run(host='localhost', port=8051, application=application,
                         help='Run built-in framework application for test')
     args = parser.parse_args()
 
-    print('Args', args)
-
-    httpd = make_server(host, port, application)
-    print('WSGIServer: Serving HTTP on port {port} ...\n'.format(port=port))
+    config = WSGIConfig(args)
+    httpd = config.make_server(config.host, config.port, config.application)
+    print('WSGIServer: Serving HTTP on port {port} ...\n'.format(
+        port=config.port))
     httpd.serve_forever()

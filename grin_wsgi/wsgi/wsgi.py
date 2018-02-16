@@ -31,7 +31,7 @@ class WSGIRequestHandler:
         env = self._get_environ(self._request)
         response_body = self._application(env, self._start_response)
 
-        self._finish_response(response_body)
+        return self._finish_response(response_body)
 
     def _get_environ(self, request):
         env = {}
@@ -66,7 +66,6 @@ class WSGIRequestHandler:
 
     def _finish_response(self, response_body):
         self._response.body = response_body
-        print('Response: ', self._response.get_response().decode('utf-8'))
         return self._response.get_response()
 
 

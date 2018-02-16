@@ -32,6 +32,7 @@ class SimpleHTTPServer:
             print('Request: ', request)
             if not request: raise
             response = request_handler(request)
+            print('Response: ', response)
             clientsock.sendall(response)
         except Exception:
             clientsock.close()
