@@ -1,5 +1,8 @@
 import re
 
+from sys import exc_info
+from traceback import format_tb
+
 from grin_wsgi.framework.http import HttpRequest, \
     HttpResponseNotFound, HttpResponseServerError
 from grin_wsgi.framework.urls import urls
@@ -19,7 +22,11 @@ def application(
                 break
         else: response = HttpResponseNotFound()
     except Exception:
-        response = HttpResponseServerError()
+        e_type, e_value, tb = exc_info()
+        traceback = ['Traceback (most recent call last):']
+        traceback += format_tb(tb)
+        traceback.append('%s: %s' % (e_type.__name__, e_value))
+        response = HttpResponseServerError('\n'.join(traceback))
 
     start_response(response.status, response.headers)
     return [response.body]

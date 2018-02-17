@@ -1,8 +1,24 @@
+import collections
+
+
+class QueryDict(collections.UserDict):
+
+    def get(self, key, default=None):
+        try:
+            value = self[key]
+            if isinstance(value, list) and len(value) == 1:
+                return value[0]
+            return value
+        except KeyError:
+            return default
+
+
 class HttpRequest:
+    """ A basic HTTP Request """
 
     def __init__(self, environ):
         for k, v in environ.items():
-            if 'wsgi.' not in k:  # exclude wsgi variables
+            if 'wsgi.' not in k:  # exclude wsgi env variables
                 setattr(self, k.lower(), v)
 
         self.data = self._get_request_data(environ['wsgi.input'])
@@ -19,7 +35,7 @@ class HttpRequest:
         return self._parse_request_query_string(str(request_body))
 
     def _parse_request_query_string(self, query_string):
-        request_dict = {}
+        request_dict = QueryDict()
         for k, v in self._request_query_string_as_list_of_tuples(query_string):
             if k in request_dict:
                 request_dict[k].extend(v)
@@ -34,9 +50,14 @@ class HttpRequest:
 
         request_string_key_value_pairs = query_string.split('&')
         for key_value_pair in request_string_key_value_pairs:
-            key, value_set = key_value_pair.split('=')
-            key_value_pairs.append((key,
-                                    value_set.replace('+', ' ').split(';')))
+            try:
+                key, value_set = key_value_pair.split('=')
+                key_value_pairs.append((key,
+                                        value_set.replace('+', ' ').split(';')
+                                        ))
+            except ValueError:
+                # key_value_pair does not exist (index url)
+                pass
 
         return key_value_pairs
 
