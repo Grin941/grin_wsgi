@@ -30,12 +30,13 @@ $ gwsgi --ini /config.ini
 ```
 * Or provide directory and module variables
 ```
-$ gwsgi --ini --chdir /opt/project --module project_name.app
+$ gwsgi --chdir /opt/project --module project_name.app
 ```
 
 For more information type: ```$ gwsgi -h```
 
 ## Config example
+```
 [gwsgi]
 chdir = /opt/project
 module = project_name.app
@@ -44,6 +45,7 @@ port = 8051
 threading = false
 processing = false
 wsgiref = false
+```
 
 ## Testing
 ```
