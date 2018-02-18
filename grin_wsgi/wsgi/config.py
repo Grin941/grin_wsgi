@@ -2,20 +2,18 @@ from configparser import ConfigParser
 from importlib import import_module
 
 from grin_wsgi import const
+from grin_wsgi.wsgi import exceptions as gwsgi_exceptions
 
 
 class WSGIConfig:
 
-    def __init__(self, conf_args):
-        self._configure_uwsgi(conf_args)
-
-    def _configure_uwsgi(self, conf_args):
+    def configure_gwsgi(self, conf_args):  # pragma: no cover
         ini = conf_args.ini
         if ini:
             (chdir, module,
              host, port,
              threading, processing,
-             wsgiref, test_framework) = self._parse_ini(ini)
+             wsgiref) = self._parse_ini(ini)
         else:
             chdir = conf_args.chdir
             module = conf_args.module
@@ -24,24 +22,27 @@ class WSGIConfig:
             threading = conf_args.threading
             processing = conf_args.processing
             wsgiref = conf_args.wsgiref
-            test_framework = conf_args.test_framework
 
         self.application = self._get_application(
-            chdir, module, test_framework)
+            chdir, module)
         self.host = host
         self.port = port
         self.threading = threading
         self.processing = processing
         self.make_server = self._get_server_handler(wsgiref)
 
-    def _parse_ini(ini_file_path):
+    def _parse_ini(self, ini_file_path):
         config = ConfigParser()
-        config.read(ini_file_path)
+        dataset = config.read(ini_file_path)
+        if not len(dataset):
+            raise gwsgi_exceptions.ConfigFileDoesNotExist(
+                'Wrong ini config file path: {0}'.format(ini_file_path))
         # gwsgi is the only section in a file
         try:
             gwsgi_conf = config['gwsgi']
         except KeyError:
-            raise Exception('Please set [gwsgi] section in an ini file')
+            raise gwsgi_exceptions.WrongConfigSectionName(
+                'Please set [gwsgi] section in an ini file')
 
         return (
             gwsgi_conf.get('chdir') or const.CHDIR,
@@ -51,11 +52,10 @@ class WSGIConfig:
             gwsgi_conf.getboolean('threading') or const.THREADING,
             gwsgi_conf.getboolean('processing') or const.PROCESSING,
             gwsgi_conf.getboolean('wsgiref') or const.WSGIREF,
-            gwsgi_conf.getboolean('test_framework') or const.TEST_FRAMEWORK
         )
 
-    def _get_application(self, chdir, module, test_framework):
-        if test_framework:
+    def _get_application(self, chdir, module):
+        if not all((chdir, module)):
             chdir = const.CHDIR
             module = const.TEST_FRAMEWORK_MODULE
         module = import_module(module, chdir)

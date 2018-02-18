@@ -15,6 +15,12 @@ setup(
     long_description=long_description,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
+    extra_require={
+        'dev': [
+            'pytest',
+            'coverage'
+        ]
+    },
     entry_points={
         'console_scripts': ['gwsgi=grin_wsgi.main:run']
     }
