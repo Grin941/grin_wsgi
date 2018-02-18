@@ -7,7 +7,7 @@ My WSGI Interface implementation
 
 ## Requirements
 
-* Python 2.7.X or 3.X
+* Python 3.5 or 3.6
 
 ## Installation
 
