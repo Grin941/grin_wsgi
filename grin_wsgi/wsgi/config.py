@@ -6,6 +6,55 @@ from grin_wsgi.wsgi import exceptions as gwsgi_exceptions
 
 
 class WSGIConfig:
+    """
+    Configuration system for GWSGI.
+
+    WSGI configuration
+    ------------------
+
+    ini
+        fullpath to a configure file with .ini extension.
+        If ini parameter is passsed you should not pass
+        any other configure parameters, but set them in
+        an .ini file
+
+    chdir
+        fullpath to a directory containing module with an
+        application() callable
+
+    module
+        python module containing application() callable
+
+    host
+        host to run WSGI server upon
+
+    port
+        port to run WSGI server upon
+
+    threading
+        if argument is passed, WSGI server would accept
+        data in a number of threads
+
+    processing
+        if argument is passed, WSGI server would accept
+        data in a number of processes
+
+    wsgiref
+        if argument is passed, wsgiref WSGI server would
+        be running instead og GWSGI server
+
+    ini config file example
+    -----------------------
+    .. note:: always use [gwsgi] section
+        [gwsgi]
+        chdir = /opt/project
+        module = project_name.app
+        host = localhost
+        port = 8051
+        threading = false
+        processing = false
+        wsgiref = false
+    """ 
 
     def configure_gwsgi(self, conf_args):  # pragma: no cover
         ini = conf_args.ini
