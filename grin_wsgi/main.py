@@ -34,7 +34,8 @@ def run():  # pragma: no cover
     args = parser.parse_args()
     config = WSGIConfig()
     config.configure_gwsgi(args)
-    httpd = config.make_server(config.host, config.port, config.application)
+    httpd = config.make_server(config.host, config.port, config.application,
+                               config.threading, config.processing)
     logging.debug('WSGIServer: Serving HTTP on port {port} ...\n'.format(
         port=config.port))
     httpd.serve_forever()

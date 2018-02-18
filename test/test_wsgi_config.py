@@ -27,7 +27,7 @@ class TestWSGIConfig:
         ini.write('[uwsgi]')
 
         with pytest.raises(gwsgi_exceptions.WrongConfigSectionName):
-            self.config._parse_ini(os.path.abspath(ini))
+            self.config._parse_ini(ini.strpath)
 
     def test_parse_ini_returns_const_value_if_one_was_not_passed_in_config(self, tmpdir):
         port = 8080
@@ -39,7 +39,7 @@ class TestWSGIConfig:
 port={port}
 """.format(port=port))
 
-        gwsgi_conf = self.config._parse_ini(os.path.abspath(ini))
+        gwsgi_conf = self.config._parse_ini(ini.strpath)
         assert gwsgi_conf[2] == gwsgi_const.HOST
         assert gwsgi_conf[3] == port
 
