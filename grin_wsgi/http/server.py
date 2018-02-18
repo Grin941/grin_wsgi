@@ -52,10 +52,10 @@ class ThreadedHTTPServer(SimpleHTTPServer):
     CONNECTION_QUEUE_LIMIT = 5
     MULTITHREAD = True
 
-    def _accept(self):
+    def _accept(self, request_handler):
         clientsock, address = self._serversock.accept()
         clientsock.settimeout(60)
-        threading.Thread(target=self.listen_to_client,
+        threading.Thread(target=request_handler,
                          args=(clientsock, address))
 
 
@@ -68,9 +68,9 @@ class MultiprocessingHTTPServer(SimpleHTTPServer):
     CONNECTION_QUEUE_LIMIT = 1
     MULTIPROCESS = True
 
-    def _accept(self):
+    def _accept(self, request_handler):
         clientsock, address = self._serversock.accept()
-        process = multiprocessing.Process(target=self.listen_to_client,
+        process = multiprocessing.Process(target=request_handler,
                                           args=(clientsock, address))
         process.daemon = True
         process.start()
