@@ -2,6 +2,15 @@ import collections
 
 
 class QueryDict(collections.UserDict):
+    """ A specialized UserDict which represents a query string.
+
+    A QueryDict can be used to represent GET or POST data.
+
+    QueryDict always contains list values.
+    But it will return you a string instead if 
+    there are anly one value in a list.
+
+    """
 
     def get(self, key, default=None):
         try:
@@ -14,7 +23,10 @@ class QueryDict(collections.UserDict):
 
 
 class HttpRequest:
-    """ A basic HTTP Request """
+    """ A basic HTTP Request.
+
+    QueryDict is generating from a WSGI environ dictionary
+    """
 
     def __init__(self, environ):
         for k, v in environ.items():
@@ -63,6 +75,7 @@ class HttpRequest:
 
 
 class HttpResponse:
+    """ A basic HTTP Request. """
 
     def __init__(self, content='', content_type='text/plain',
                  status=200, reason='OK', charset='utf-8'):
@@ -75,6 +88,7 @@ class HttpResponse:
 
 
 class HttpResponseNotFound(HttpResponse):
+    """ 404 Response """
 
     def __init__(self, content='Sorry, Not Found', content_type='text/plain',
                  status=404, reason='NOT FOUND', charset='utf-8'):
@@ -82,6 +96,7 @@ class HttpResponseNotFound(HttpResponse):
 
 
 class HttpResponseServerError(HttpResponse):
+    """ 500 Response """
 
     def __init__(self, content='Ooops... Server Error',
                  content_type='text/plain',

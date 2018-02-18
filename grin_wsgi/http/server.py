@@ -1,9 +1,13 @@
+import logging
 import socket
 import threading
 import multiprocessing
 
 
 class SimpleHTTPServer:
+    """ TCP IPv4 socket
+    binded to passed hostname and port.
+    """
 
     CONNECTION_QUEUE_LIMIT = 1
     SOCKET_FAMILY = socket.AF_INET
@@ -29,10 +33,10 @@ class SimpleHTTPServer:
         clientsock, address = self._serversock.accept()
         try:
             request = clientsock.recv(1024).decode('utf-8')
-            print('Request: ', request)
+            logging.debug('Request: {}'.format(request))
             if not request: raise
             response = request_handler(request)
-            print('Response: ', response)
+            logging.debug('Response: {}'.format(response))
             clientsock.sendall(response)
         except Exception:
             clientsock.close()
@@ -40,6 +44,10 @@ class SimpleHTTPServer:
 
 
 class ThreadedHTTPServer(SimpleHTTPServer):
+    """ TCP IPv4 socket listening connection
+    in a multiple threads and
+    binded to passed hostname and port.
+    """
 
     CONNECTION_QUEUE_LIMIT = 5
     MULTITHREAD = True
@@ -52,6 +60,10 @@ class ThreadedHTTPServer(SimpleHTTPServer):
 
 
 class MultiprocessingHTTPServer(SimpleHTTPServer):
+    """ TCP IPv4 socket listenning connections in
+    a multiple processess and
+    binded to passed hostname and port.
+    """
 
     CONNECTION_QUEUE_LIMIT = 1
     MULTIPROCESS = True

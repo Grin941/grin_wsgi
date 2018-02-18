@@ -11,10 +11,20 @@ from grin_wsgi.http.server import SimpleHTTPServer, \
 
 def make_server(host, port, application,  # pragma: no cover
                 threading=False, multiprocessing=False):
+    """
+    Create a new WSGI listening on host and port,
+    accepting connections for application.
+    You may create either SimpleHTTPServer or
+    Threading or Multiprocessing HTTPServer.
+    """
     return WSGIServer(host, port, application, threading, multiprocessing)
 
 
-class WSGIRequestHandler:
+class WSGIRequestHandler:  # pragma: no cover
+    """
+    Create an HTTP handler for the given request,
+    client_address (a (host,port) tuple), and server (WSGIServer instance).
+    """
 
     def __init__(self, application,
                  server_multithread=False,
@@ -27,6 +37,7 @@ class WSGIRequestHandler:
         self._server_multiprocess = server_multiprocess
 
     def __call__(self, request):
+        """ Process the HTTP request. """
         self._request.plain_request = request
         env = self._get_environ(self._request)
         response_body = self._application(env, self._start_response)
@@ -34,6 +45,9 @@ class WSGIRequestHandler:
         return self._finish_response(response_body)
 
     def _get_environ(self, request):
+        """
+        Returns a dictionary containing the WSGI environment for a request.
+        """
         env = {}
 
         # Required UWSGI variables
@@ -70,6 +84,9 @@ class WSGIRequestHandler:
 
 
 class WSGIServer:
+    """
+    Create a WSGIServer instance.
+    """
 
     http_server_factory = {
         'simple': SimpleHTTPServer,
@@ -90,6 +107,7 @@ class WSGIServer:
         return self.http_server_factory[server_type](host, port)
 
     def serve_forever(self):
+        """ Handle requests until an explicit shutdown() request. """
         request_handler = WSGIRequestHandler(
             self._application,
             server_multithread=self._server.MULTITHREAD,

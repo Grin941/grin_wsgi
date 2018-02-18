@@ -35,6 +35,10 @@ $ gwsgi --chdir /opt/project --module project_name.app
 
 For more information type: ```$ gwsgi -h```
 
+Test built-in framework by such requests:
+* http://localhost:8051/
+* http://localhost:8051/hello/?name=username
+
 ## Config example
 ```
 [gwsgi]
