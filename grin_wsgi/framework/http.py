@@ -87,6 +87,17 @@ class HttpResponse:
         self.body = content.encode(charset)
 
 
+class HttpResponseRedirect(HttpResponse):
+    """ 301 Response """
+
+    def __init__(self, redirect_url,
+                 content='Moved Permanently', content_type='text/plain',
+                 status=301, reason='MOVED PERMANENTLY', charset='utf-8'):
+        super().__init__(content, content_type, status, reason, charset)
+
+        self.headers.append(('Location', redirect_url))
+
+
 class HttpResponseNotFound(HttpResponse):
     """ 404 Response """
 
