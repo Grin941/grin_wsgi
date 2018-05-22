@@ -10,4 +10,4 @@ PROCESSING = False
 WSGIREF = False
 
 TEST_FRAMEWORK = True
-TEST_FRAMEWORK_MODULE = 'grin_wsgi.framework.app'
+TEST_FRAMEWORK_MODULE = 'grin_wsgi.test_project'

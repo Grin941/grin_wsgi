@@ -1,6 +1,3 @@
-HTTP_METHODS = {'GET', 'POST', 'PUT', 'UPDATE'}
-
-
 class Response:
     """ HTTPResponse class.
     Each instance constains such attributes::

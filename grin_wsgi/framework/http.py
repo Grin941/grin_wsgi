@@ -1,6 +1,9 @@
 import collections
 
 
+HTTP_METHODS = {'GET', 'POST', 'PUT', 'UPDATE'}
+
+
 class QueryDict(collections.UserDict):
     """ A specialized UserDict which represents a query string.
 

@@ -1,16 +1,10 @@
 import re
-
-from .views import index, hello
-from .http import HttpResponseNotFound, HttpResponseRedirect
+import functools
 
 
 class UrlRouter:
     def __init__(self, url_prefix=''):
-        self._urls = [
-            (r'^$', index),
-            (r'hello/(.+)$', hello),
-            (r'hello/<str:name>/page<int:page>$', hello),
-        ]
+        self._urls = []
         self._url_patterns = set()
         self._url_prefix = url_prefix
 
@@ -18,18 +12,15 @@ class UrlRouter:
     def url_prefix(self):
         return self._url_prefix
 
-    def __add__(self, other):
-        pass
-
     def __contains__(self, url_pattern):
-        return f'{self.url_prefix}/{url_pattern}' in self._url_patterns
+        return f'{self.url_prefix}{url_pattern}' in self._url_patterns
 
     def append(self, url_pattern, view):
         if url_pattern not in self:
             self._urls.append(
-                (f'{self.url_prefix}/{url_pattern}', view)
+                (f'{self.url_prefix}{url_pattern}', view)
             )
-            self._url_patterns.add(f'{self.url_prefix}/{url_pattern}')
+            self._url_patterns.add(f'{self.url_prefix}{url_pattern}')
 
     @staticmethod
     def _convert_url_pattern_to_regexp(url_pattern):
@@ -46,7 +37,8 @@ class UrlRouter:
 
         return f'(?P<{pat_name}>{pat_type})'
 
-    def dispatch(self, url, request):
+    def dispatch(self, url):
+        dispatched_view, redirect = None, False
         redirect_url = url.rstrip('/')
         url_converter_pattern = r'<(\w+):(\w+)>'  # <str:name>, for ex.
         for url_pattern, view in self._urls:
@@ -62,10 +54,11 @@ class UrlRouter:
                 # url_pattern didn't match, try the new one
                 continue
 
-            view_kwargs = regexp_parsed_url.groupdict()
             if url == redirect_url and url_pattern != redirect_url_pattern:
-                # Redirect to the prime resource
-                return HttpResponseRedirect(f'{url}/')
+                redirect = True
+                break
 
-            return view(request, **view_kwargs)
-        else: return HttpResponseNotFound()
+            view_kwargs = regexp_parsed_url.groupdict()
+            print('view_kwargs', view_kwargs)
+            dispatched_view = functools.partial(view, **view_kwargs)
+        return dispatched_view, redirect

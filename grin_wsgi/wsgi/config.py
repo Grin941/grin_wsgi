@@ -108,4 +108,4 @@ class WSGIConfig:
             chdir = const.CHDIR
             module = const.TEST_FRAMEWORK_MODULE
         module = import_module(module, chdir)
-        return getattr(module, 'GrinApp')()
+        return getattr(module, 'project')
