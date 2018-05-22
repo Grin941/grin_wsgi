@@ -3,6 +3,7 @@ import logging
 
 from grin_wsgi import const
 from grin_wsgi.wsgi.config import WSGIConfig
+from grin_wsgi.wsgi import make_server
 
 
 parser = argparse.ArgumentParser(
@@ -34,8 +35,8 @@ def run():  # pragma: no cover
     args = parser.parse_args()
     config = WSGIConfig()
     config.configure_gwsgi(args)
-    httpd = config.make_server(config.host, config.port, config.application,
-                               config.threading, config.processing)
+    httpd = make_server(config.host, config.port, config.application,
+                        config.threading, config.processing, config.wsgiref)
     logging.debug('WSGIServer: Serving HTTP on port {port} ...\n'.format(
         port=config.port))
     httpd.serve_forever()

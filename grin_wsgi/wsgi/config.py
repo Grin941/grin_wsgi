@@ -54,7 +54,7 @@ class WSGIConfig:
         threading = false
         processing = false
         wsgiref = false
-    """ 
+    """
 
     def configure_gwsgi(self, conf_args):  # pragma: no cover
         ini = conf_args.ini
@@ -78,7 +78,7 @@ class WSGIConfig:
         self.port = port
         self.threading = threading
         self.processing = processing
-        self.make_server = self._get_server_handler(wsgiref)
+        self.wsgiref = wsgiref
 
     def _parse_ini(self, ini_file_path):
         config = ConfigParser()
@@ -108,12 +108,4 @@ class WSGIConfig:
             chdir = const.CHDIR
             module = const.TEST_FRAMEWORK_MODULE
         module = import_module(module, chdir)
-        return getattr(module, 'application')
-
-    def _get_server_handler(self, wsgiref):
-        if wsgiref:
-            from wsgiref.simple_server import make_server
-        else:
-            from grin_wsgi.wsgi.wsgi import make_server
-
-        return make_server
+        return getattr(module, 'GrinApp')()

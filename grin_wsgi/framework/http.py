@@ -7,7 +7,7 @@ class QueryDict(collections.UserDict):
     A QueryDict can be used to represent GET or POST data.
 
     QueryDict always contains list values.
-    But it will return you a string instead if 
+    But it will return you a string instead if
     there are anly one value in a list.
 
     """
@@ -41,7 +41,7 @@ class HttpRequest:
         except (AttributeError, ValueError):
             request_body_size = 0
 
-        request_body = self.query_string if self.request_method == 'GET' else \
+        request_body = self.query_string if self.method == 'GET' else \
             wsgi_input.read(request_body_size)
 
         return self._parse_request_query_string(str(request_body))
@@ -103,6 +103,15 @@ class HttpResponseNotFound(HttpResponse):
 
     def __init__(self, content='Sorry, Not Found', content_type='text/plain',
                  status=404, reason='NOT FOUND', charset='utf-8'):
+        super().__init__(content, content_type, status, reason, charset)
+
+
+class HttpMethodNotAllowed(HttpResponse):
+    """ 405 Response """
+
+    def __init__(self, content='Sorry, Method not allowed',
+                 content_type='text/plain',
+                 status=405, reason='NOT ALLOWED', charset='utf-8'):
         super().__init__(content, content_type, status, reason, charset)
 
 

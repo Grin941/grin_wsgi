@@ -9,7 +9,7 @@ def index(request):
     return HttpResponse(html)
 
 
-def hello(request):
+def hello(request, **kwargs):
     name = request.data.get('name', 'Anonymus')
     html = 'Hello, {}!'.format(name)
     return HttpResponse(html)
