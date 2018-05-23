@@ -59,6 +59,6 @@ class UrlRouter:
                 break
 
             view_kwargs = regexp_parsed_url.groupdict()
-            print('view_kwargs', view_kwargs)
             dispatched_view = functools.partial(view, **view_kwargs)
+            break  # View was found
         return dispatched_view, redirect
