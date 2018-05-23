@@ -1,21 +1,29 @@
 import re
 import functools
+import typing
 
 
 class UrlRouter:
-    def __init__(self, url_prefix=''):
+    def __init__(
+        self,
+        url_prefix: typing.Optional[str]=''
+    ) -> None:
         self._urls = []
         self._url_patterns = set()
         self._url_prefix = url_prefix
 
     @property
-    def url_prefix(self):
+    def url_prefix(self) -> str:
         return self._url_prefix
 
-    def __contains__(self, url_pattern):
+    def __contains__(self, url_pattern: str) -> bool:
         return f'{self.url_prefix}{url_pattern}' in self._url_patterns
 
-    def append(self, url_pattern, view):
+    def append(
+        self,
+        url_pattern: str,
+        view: typing.Callable
+    ) -> None:
         if url_pattern not in self:
             self._urls.append(
                 (f'{self.url_prefix}{url_pattern}', view)
@@ -23,7 +31,7 @@ class UrlRouter:
             self._url_patterns.add(f'{self.url_prefix}{url_pattern}')
 
     @staticmethod
-    def _convert_url_pattern_to_regexp(url_pattern):
+    def _convert_url_pattern_to_regexp(url_pattern: str) -> str:
         """
         Example: <str:name> -> (?P<name>\w+)
         """
@@ -37,7 +45,10 @@ class UrlRouter:
 
         return f'(?P<{pat_name}>{pat_type})'
 
-    def dispatch(self, url):
+    def dispatch(
+        self,
+        url: str
+    ) -> typing.Tuple[typing.Callable, bool]:
         dispatched_view, redirect = None, False
         redirect_url = url.rstrip('/')
         url_converter_pattern = r'<(\w+):(\w+)>'  # <str:name>, for ex.

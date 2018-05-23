@@ -1,16 +1,24 @@
 import sys
 import socket
+import typing
 
 from io import StringIO
 from email.utils import formatdate
 
-from grin_wsgi.http import Request, Response
-from grin_wsgi.http.server import SimpleHTTPServer, \
-    ThreadedHTTPServer, MultiprocessingHTTPServer
+from grin_wsgi.http import Request, Response, server as http_server
 
 
-def make_server(host, port, application,  # pragma: no cover
-                threading=False, multiprocessing=False, wsgiref=False):
+__all__ = ['make_server', 'WSGIRequestHandler', 'WSGIServer']
+
+
+def make_server(
+    host: str,
+    port: int,
+    application: typing.Callable,
+    threading: typing.Optional[bool]=False,
+    multiprocessing: typing.Optional[bool]=False,
+    wsgiref: typing.Optional[bool]=False
+) -> typing.Any:  # pragma: no cover
     """
     Create a new WSGI listening on host and port,
     accepting connections for application.
@@ -31,9 +39,13 @@ class WSGIRequestHandler:  # pragma: no cover
     client_address (a (host,port) tuple), and server (WSGIServer instance).
     """
 
-    def __init__(self, application,
-                 server_multithread=False,
-                 server_multiprocess=False):
+    def __init__(
+        self,
+        application: typing.Callable,
+        server_multithread: typing.Optional[bool]=False,
+        server_multiprocess: typing.Optional[bool]=False
+    ) -> None:
+
         self._application = application
         self._response = Response()
         self._request = Request()
@@ -41,7 +53,10 @@ class WSGIRequestHandler:  # pragma: no cover
         self._server_multithread = server_multithread
         self._server_multiprocess = server_multiprocess
 
-    def __call__(self, request):
+    def __call__(
+        self,
+        request: str
+    ) -> bytes:
         """ Process the HTTP request. """
         self._request.plain_request = request
         env = self._get_environ(self._request)
@@ -49,7 +64,10 @@ class WSGIRequestHandler:  # pragma: no cover
 
         return self._finish_response(response_body)
 
-    def _get_environ(self, request):
+    def _get_environ(
+        self,
+        request: Request
+    ) -> typing.Dict[str, typing.Any]:
         """
         Returns a dictionary containing the WSGI environment for a request.
         """
@@ -74,7 +92,12 @@ class WSGIRequestHandler:  # pragma: no cover
 
         return env
 
-    def _start_response(self, status, response_headers, exc_info=None):
+    def _start_response(
+        self,
+        status: str,
+        response_headers: typing.List[typing.Tuple[str, str]],
+        exc_info: typing.Optional=None
+    ) -> None:
         server_headers = [
             ('Date', formatdate(timeval=None, localtime=False, usegmt=True)),
             ('Server', 'WSGIServer 0.2')
@@ -92,26 +115,37 @@ class WSGIServer:
     """
     Create a WSGIServer instance.
     """
-
     http_server_factory = {
-        'simple': SimpleHTTPServer,
-        'threading': ThreadedHTTPServer,
-        'processing': MultiprocessingHTTPServer
+        'simple': http_server.SimpleHTTPServer,
+        'threading': http_server.ThreadedHTTPServer,
+        'processing': http_server.MultiprocessingHTTPServer
     }
 
-    def __init__(self, host, port, application,
-                 threads=False, multiprocs=False):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        application: typing.Callable,
+        threads: typing.Optional[bool]=False,
+        multiprocs: typing.Optional[bool]=False
+    ) -> None:
         self._server = self._make_server(host, port, threads, multiprocs)
         self._application = application
 
-    def _make_server(self, host, port, threads, processing):
+    def _make_server(
+        self,
+        host: str,
+        port: int,
+        threads: bool,
+        processing: bool
+    ) -> typing.Any:
         server_type = 'simple'
         if threads: server_type = 'threading'
         if processing: server_type = 'processing'
 
         return self.http_server_factory[server_type](host, port)
 
-    def serve_forever(self):
+    def serve_forever(self) -> None:
         """ Handle requests until an explicit shutdown() request. """
         request_handler = WSGIRequestHandler(
             self._application,

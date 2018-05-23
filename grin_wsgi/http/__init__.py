@@ -1,3 +1,8 @@
+import typing
+
+__all__ = ['Response', 'Request']
+
+
 class Response:
     """ HTTPResponse class.
     Each instance constains such attributes::
@@ -12,14 +17,20 @@ class Response:
         Iterable returned by an application() UWSGI callable
     """
 
-    def __setattr__(self, name, value):
+    def __setattr__(
+        self,
+        name: str,
+        value: typing.Any
+    ) -> None:
+        """ Set Response attributes (status, headers, body). """
         super().__setattr__(name, value)
 
-    def get_response(self):
+    def get_response(self) -> bytes:
         """ Generate full response string """
-        response = 'HTTP/1.1 {status}\r\n'.format(status=self.status)
+        response = f'HTTP/1.1 {self.status}\r\n'
         for header in self.headers:
-            response += '{0}: {1}\r\n'.format(*header)
+            http_header_name, http_header_value = header
+            response += f'{http_header_name}: {http_header_value}\r\n'
         response += '\r\n'
         for data in self.body:
             response += data.decode('utf-8')
@@ -61,25 +72,34 @@ class Request:
         empty string for GET request or Request data for a POST request
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._plain_request = None
 
     @property
-    def plain_request(self):
+    def plain_request(self) -> str:
+        """ Example: GET /hello/?name=username HTTP/1.1 """
         return self._plain_request
 
     @plain_request.setter
-    def plain_request(self, plain_request):
+    def plain_request(
+        self,
+        plain_request: str
+    ) -> None:
         self._parse_request(plain_request)
         self._plain_request = plain_request
 
-    def _parse_request(self, request):
+    def _parse_request(
+        self,
+        request: str
+    ) -> None:
         request_list = request.splitlines()
 
         request_line = request_list[0]
         host_header = next(filter(lambda x: 'Host:' in x, request_list), '::')
         content_length_header = next(
-            filter(lambda x: 'Content-Length:' in x, request_list), ':')
+            filter(lambda x: 'Content-Length:' in x, request_list),
+            ':'
+        )
 
         self.method, self.uri, self.version = request_line.split()
         self.host, self.port = host_header.split(':')[1:]

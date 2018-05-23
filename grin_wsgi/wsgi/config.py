@@ -1,8 +1,13 @@
+import typing
+
 from configparser import ConfigParser
 from importlib import import_module
 
 from grin_wsgi import const
 from grin_wsgi.wsgi import exceptions as gwsgi_exceptions
+
+
+Namespace = typing.TypeVar('Namespace')
 
 
 class WSGIConfig:
@@ -56,7 +61,10 @@ class WSGIConfig:
         wsgiref = false
     """
 
-    def configure_gwsgi(self, conf_args):  # pragma: no cover
+    def configure_gwsgi(
+        self,
+        conf_args: Namespace
+    ) -> None:  # pragma: no cover
         ini = conf_args.ini
         if ini:
             (chdir, module,
@@ -80,7 +88,10 @@ class WSGIConfig:
         self.processing = processing
         self.wsgiref = wsgiref
 
-    def _parse_ini(self, ini_file_path):
+    def _parse_ini(
+        self,
+        ini_file_path: str
+    ) -> typing.Tuple[typing.Any]:
         config = ConfigParser()
         dataset = config.read(ini_file_path)
         if not len(dataset):
@@ -103,7 +114,11 @@ class WSGIConfig:
             gwsgi_conf.getboolean('wsgiref') or const.WSGIREF,
         )
 
-    def _get_application(self, chdir, module):
+    def _get_application(
+        self,
+        chdir: str,
+        module: str
+    ) -> typing.Callable:
         if not all((chdir, module)):
             chdir = const.CHDIR
             module = const.TEST_FRAMEWORK_MODULE

@@ -1,3 +1,5 @@
+import typing
+
 from sys import exc_info
 from traceback import format_tb
 
@@ -10,19 +12,27 @@ from .urls import UrlRouter
 
 class App:
 
-    def __init__(self, name='GrinApp', url_prefix=''):
+    def __init__(
+        self,
+        name: typing.Optional[str]='GrinApp',
+        url_prefix: typing.Optional[str]=''
+    ) -> None:
         self._name = name
         self._url_router = UrlRouter(url_prefix)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def url_router(self):
+    def url_router(self) -> UrlRouter:
         return self._url_router
 
-    def route(self, url_pattern, required_methods=None):
+    def route(
+        self,
+        url_pattern: str,
+        required_methods: typing.Optional=None
+    ) -> typing.Callable:
         if required_methods is None:
             required_methods = HTTP_METHODS
 
@@ -41,13 +51,16 @@ class App:
 
 class Project:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._dispatcher = {}
 
-    def __contains__(self, app):
+    def __contains__(
+        self,
+        app: App
+    ) -> bool:
         return app.name in self._dispatcher
 
-    def register_app(self, *args, **kwargs):
+    def register_app(self, *args, **kwargs) -> App:
         app = App(*args, **kwargs)
         if app not in self:
             self._dispatcher[app.name] = app.url_router
@@ -56,7 +69,11 @@ class Project:
         del app
         raise Exception(f'App {app_name} has already been registered')
 
-    def dispatch(self, url, request):
+    def dispatch(
+        self,
+        url: str,
+        request: HttpRequest
+    ) -> typing.Any:
         try:
             url_prefix = url.split('/')[0]
         except IndexError:
@@ -83,9 +100,9 @@ class Project:
 
     def __call__(
         self,
-        environ,  # dictionary containing CGI like environment
-        start_response
-    ):
+        environ: typing.Dict[str, typing.Any],  # CGI like environment
+        start_response: typing.Callable
+    ) -> typing.List[str]:
         try:
             request = HttpRequest(environ)
             url = request.path_info.lstrip('/')
