@@ -67,10 +67,12 @@ class WSGIConfig:
     ) -> None:  # pragma: no cover
         ini = conf_args.ini
         if ini:
-            (chdir, module,
-             host, port,
-             threading, processing,
-             wsgiref) = self._parse_ini(ini)
+            (
+                chdir, module,
+                host, port,
+                threading, processing,
+                wsgiref
+            ) = self._parse_ini(ini)
         else:
             chdir = conf_args.chdir
             module = conf_args.module
@@ -81,7 +83,8 @@ class WSGIConfig:
             wsgiref = conf_args.wsgiref
 
         self.application = self._get_application(
-            chdir, module)
+            chdir, module
+        )
         self.host = host
         self.port = port
         self.threading = threading
@@ -96,13 +99,15 @@ class WSGIConfig:
         dataset = config.read(ini_file_path)
         if not len(dataset):
             raise gwsgi_exceptions.ConfigFileDoesNotExist(
-                'Wrong ini config file path: {0}'.format(ini_file_path))
+                'Wrong ini config file path: {0}'.format(ini_file_path)
+            )
         # gwsgi is the only section in a file
         try:
             gwsgi_conf = config['gwsgi']
         except KeyError:
             raise gwsgi_exceptions.WrongConfigSectionName(
-                'Please set [gwsgi] section in an ini file')
+                'Please set [gwsgi] section in an ini file'
+            )
 
         return (
             gwsgi_conf.get('chdir') or const.CHDIR,

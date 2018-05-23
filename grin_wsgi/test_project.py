@@ -14,8 +14,8 @@ def index(request):
     return HttpResponse(html)
 
 
-@app.route(r'hello/(.+)$')
-@app.route(r'hello/<str:name>/page<int:page>$')
+@app.route(r'hello/(.+)$', required_methods=['GET'])
+@app.route(r'hello/<str:name>/page<int:page>$', required_methods=['GET'])
 def hello(request, **kwargs):
     name = kwargs.get('name', request.data.get('name', 'Anonymus'))
     page = kwargs.get('page')

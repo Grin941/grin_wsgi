@@ -63,8 +63,8 @@ project = Project()
 app = project.register_app(__name__)
 
 
-@app.route(r'hello/(.+)$')
-@app.route(r'hello/<str:name>/page<int:page>$')
+@app.route(r'hello/(.+)$', required_methods=['GET'])
+@app.route(r'hello/<str:name>/page<int:page>$', required_methods=['GET'])
 def hello(request, **kwargs):
     name = kwargs.get('name', request.data.get('name', 'Anonymus'))
     page = kwargs.get('page')
@@ -73,6 +73,7 @@ def hello(request, **kwargs):
         html += f' You are on the {page} page.'
     return HttpResponse(html)
 ```
+Note: you should always create ```project = Project()``` variable to define your project. Each new Application should be registered through the ```project``` var.
 
 ## Testing
 ```
