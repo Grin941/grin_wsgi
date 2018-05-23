@@ -2,6 +2,10 @@ import logging
 import socket
 import threading
 import multiprocessing
+import typing
+
+
+WSGIRequestHandler = typing.TypeVar('WSGIRequestHandler')
 
 
 class SimpleHTTPServer:
@@ -15,28 +19,42 @@ class SimpleHTTPServer:
     MULTITHREAD = False
     MULTIPROCESS = False
 
-    def __init__(self, host, port):
+    def __init__(
+        self,
+        host: str,
+        port: int
+    ) -> None:
         self._serversock = None
         self._create_serversocket(host, port)
 
-    def _create_serversocket(self, host, port):
+    def _create_serversocket(
+        self,
+        host: str,
+        port: int
+    ) -> None:
         self._serversock = socket.socket(self.SOCKET_FAMILY, self.SOCKET_TYPE)
         self._serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._serversock.bind((host, port))
 
-    def process_request(self, request_handler):
+    def process_request(
+        self,
+        request_handler: WSGIRequestHandler
+    ) -> None:
         self._serversock.listen(self.CONNECTION_QUEUE_LIMIT)
         while True:
             self._accept(request_handler)
 
-    def _accept(self, request_handler):
+    def _accept(
+        self,
+        request_handler: WSGIRequestHandler
+    ) -> typing.Any:
         clientsock, address = self._serversock.accept()
         try:
             request = clientsock.recv(1024).decode('utf-8')
-            logging.debug('Request: {}'.format(request))
+            logging.debug(f'Request: {request}')
             if not request: raise
             response = request_handler(request)
-            logging.debug('Response: {}'.format(response))
+            logging.debug(f'Response: {response}')
             clientsock.sendall(response)
         except Exception:
             clientsock.close()
@@ -52,11 +70,16 @@ class ThreadedHTTPServer(SimpleHTTPServer):
     CONNECTION_QUEUE_LIMIT = 5
     MULTITHREAD = True
 
-    def _accept(self, request_handler):
+    def _accept(
+        self,
+        request_handler: WSGIRequestHandler
+    ) -> None:
         clientsock, address = self._serversock.accept()
         clientsock.settimeout(60)
-        threading.Thread(target=request_handler,
-                         args=(clientsock, address))
+        threading.Thread(
+            target=request_handler,
+            args=(clientsock, address)
+        )
 
 
 class MultiprocessingHTTPServer(SimpleHTTPServer):
@@ -68,9 +91,14 @@ class MultiprocessingHTTPServer(SimpleHTTPServer):
     CONNECTION_QUEUE_LIMIT = 1
     MULTIPROCESS = True
 
-    def _accept(self, request_handler):
+    def _accept(
+        self,
+        request_handler: WSGIRequestHandler
+    ) -> None:
         clientsock, address = self._serversock.accept()
-        process = multiprocessing.Process(target=request_handler,
-                                          args=(clientsock, address))
+        process = multiprocessing.Process(
+            target=request_handler,
+            args=(clientsock, address)
+        )
         process.daemon = True
         process.start()

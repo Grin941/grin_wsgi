@@ -2,12 +2,13 @@ Grin WSGI
 =========
 [![Build Status](https://travis-ci.org/Grin941/grin_wsgi.svg?branch=master)](https://travis-ci.org/Grin941/grin_wsgi)
 [![Coverage by codecov.io](https://codecov.io/gh/Grin941/grin_wsgi/branch/master/graphs/badge.svg?branch=master)](https://codecov.io/gh/Grin941/grin_wsgi?branch=master)
+[![Maintainability](https://api.codeclimate.com/v1/badges/83c71f7d66f2ce7962d5/maintainability)](https://codeclimate.com/github/Grin941/grin_wsgi/maintainability)
 
 My WSGI Interface implementation
 
 ## Requirements
 
-* Python 3.5 or 3.6
+* Python 3.6
 
 ## Installation
 
@@ -17,7 +18,7 @@ $ make
 
 ## Usage
 
-To run built-in framework app type:
+To run built-in test framework app type:
 ```
 $ gwsgi
 ```
@@ -38,6 +39,7 @@ For more information type: ```$ gwsgi -h```
 Test built-in framework by such requests:
 * http://localhost:8051/
 * http://localhost:8051/hello/?name=username
+* http://localhost:8051/hello/alex/page1
 
 ## Config example
 ```
@@ -50,6 +52,28 @@ threading = false
 processing = false
 wsgiref = false
 ```
+
+## A Minimal Application
+```
+from grin_wsgi.framework.http import HttpResponse
+from grin_wsgi.framework.app import Project
+
+
+project = Project()
+app = project.register_app(__name__)
+
+
+@app.route(r'hello/(.+)$', required_methods=['GET'])
+@app.route(r'hello/<str:name>/page<int:page>$', required_methods=['GET'])
+def hello(request, **kwargs):
+    name = kwargs.get('name', request.data.get('name', 'Anonymus'))
+    page = kwargs.get('page')
+    html = f'Hello, {name}!'
+    if page is not None:
+        html += f' You are on the {page} page.'
+    return HttpResponse(html)
+```
+Note: you should always create ```project = Project()``` variable to define your project. Each new Application should be registered through the ```project``` var.
 
 ## Testing
 ```

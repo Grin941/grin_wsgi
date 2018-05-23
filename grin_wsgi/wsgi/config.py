@@ -1,8 +1,13 @@
+import typing
+
 from configparser import ConfigParser
 from importlib import import_module
 
 from grin_wsgi import const
 from grin_wsgi.wsgi import exceptions as gwsgi_exceptions
+
+
+Namespace = typing.TypeVar('Namespace')
 
 
 class WSGIConfig:
@@ -54,15 +59,20 @@ class WSGIConfig:
         threading = false
         processing = false
         wsgiref = false
-    """ 
+    """
 
-    def configure_gwsgi(self, conf_args):  # pragma: no cover
+    def configure_gwsgi(
+        self,
+        conf_args: Namespace
+    ) -> None:  # pragma: no cover
         ini = conf_args.ini
         if ini:
-            (chdir, module,
-             host, port,
-             threading, processing,
-             wsgiref) = self._parse_ini(ini)
+            (
+                chdir, module,
+                host, port,
+                threading, processing,
+                wsgiref
+            ) = self._parse_ini(ini)
         else:
             chdir = conf_args.chdir
             module = conf_args.module
@@ -73,25 +83,31 @@ class WSGIConfig:
             wsgiref = conf_args.wsgiref
 
         self.application = self._get_application(
-            chdir, module)
+            chdir, module
+        )
         self.host = host
         self.port = port
         self.threading = threading
         self.processing = processing
-        self.make_server = self._get_server_handler(wsgiref)
+        self.wsgiref = wsgiref
 
-    def _parse_ini(self, ini_file_path):
+    def _parse_ini(
+        self,
+        ini_file_path: str
+    ) -> typing.Tuple[typing.Any]:
         config = ConfigParser()
         dataset = config.read(ini_file_path)
         if not len(dataset):
             raise gwsgi_exceptions.ConfigFileDoesNotExist(
-                'Wrong ini config file path: {0}'.format(ini_file_path))
+                'Wrong ini config file path: {0}'.format(ini_file_path)
+            )
         # gwsgi is the only section in a file
         try:
             gwsgi_conf = config['gwsgi']
         except KeyError:
             raise gwsgi_exceptions.WrongConfigSectionName(
-                'Please set [gwsgi] section in an ini file')
+                'Please set [gwsgi] section in an ini file'
+            )
 
         return (
             gwsgi_conf.get('chdir') or const.CHDIR,
@@ -103,17 +119,13 @@ class WSGIConfig:
             gwsgi_conf.getboolean('wsgiref') or const.WSGIREF,
         )
 
-    def _get_application(self, chdir, module):
+    def _get_application(
+        self,
+        chdir: str,
+        module: str
+    ) -> typing.Callable:
         if not all((chdir, module)):
             chdir = const.CHDIR
             module = const.TEST_FRAMEWORK_MODULE
         module = import_module(module, chdir)
-        return getattr(module, 'application')
-
-    def _get_server_handler(self, wsgiref):
-        if wsgiref:
-            from wsgiref.simple_server import make_server
-        else:
-            from grin_wsgi.wsgi.wsgi import make_server
-
-        return make_server
+        return getattr(module, 'project')
